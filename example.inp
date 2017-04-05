@@ -1,0 +1,24 @@
+PROBLEM NAME: Elasticity 2D
+
+DISCRETIZATION
+Mesh Input File: \Users\marioju\Downloads\plateWithHole.msh
+Output Filename: \\Client\C$\Users\marioju\Downloads\
+Side Set Association: 1
+1 top
+Node Set Association: 2
+4 pointLoad
+2 bottom
+Dirichlet BCs: 2
+DBC on NS bottom for DOF X: 0.0
+DBC on NS bottom for DOF Y: 0.0
+Neumann BCs: 1
+NBC on SS top for press: -1.0
+Point Force: 1
+PFC on NS pointLoad for force Y: 1.0
+
+MATERIAL PROPERTIES
+Elastic modulus: 200e9
+Poisson ratio: 0.3
+Plane stress: true
+
+
