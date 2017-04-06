@@ -223,9 +223,9 @@ end
 fclose(fileID);
 % post-process data
 nel = triCount;
-elements = zeros(nel,4); % store number of physical entity, element tag, value
-pointNode = zeros(pointCount,4);
-lineNode = zeros(lineCount,5);
+elements = zeros(nel,4); % store number of physical entity, element tag
+pointNode = zeros(pointCount,2);
+lineNode = zeros(lineCount,3);
 %
 % count number of 1-node point
 pointCount = 0;
@@ -257,33 +257,78 @@ end
 clearvars elementsT
 
 % post-process boundary conditions
-[m,~] = size(pointNode);
-numericCell = nodeSet(:,1);
-numericVector = cell2mat(numericCell);
-for i=1:m
-    phytag = pointNode(i,1);
-    % search in nodeSet
-    [row,~] = find(numericVector==phytag);
-    name = nodeSet{row,2};
-    % find in DBCSet first
-    [row,~] = find(strcmp(DBCSet,name),3);
-    found = false;
-    for j=1:length(row)
-        value = DBCSet{row(j),2};
-        pointNode(i,4) = value;
-        found = true;
-    end
-    if found
-        continue
-    end
-    % find in PFCSet next
-    [row,~] = find(strcmp(PFCSet,name),3);
-    for j=1:length(row)
-        value = PFBCSet{row(j),2};
-        pointNode(i,3) = 1; % is a force
-        pointNode(i,4) = value;
-    end
-end
+% [m,~] = size(pointNode);
+% numericCell = nodeSet(:,1);
+% numericVector = cell2mat(numericCell);
+% for i=1:m
+%     phytag = pointNode(i,1);
+%     % search in nodeSet
+%     [row,~] = find(numericVector==phytag);
+%     if row == 0
+%         continue
+%     end
+%     name = nodeSet{row,2};
+%     % find in DBCSet first
+%     [row,~] = find(strcmp(DBCSet,name),3);
+%     found = false;
+%     for j=1:length(row)
+%         value = DBCSet{row(j),3};
+%         if strcmp(DBCSet{row(j),2},'X')
+%             pointNode(i,4) = 0; % X
+%         else
+%             pointNode(i,4) = 1; % Y
+%         end
+%         pointNode(i,5) = value;
+%         found = true;
+%     end
+%     if found
+%         continue
+%     end
+%     % find in PFCSet next
+%     [row,~] = find(strcmp(PFCSet,name),3);
+%     for j=1:length(row)
+%         value = PFCSet{row(j),2};
+%         pointNode(i,3) = 1; % is a force
+%         pointNode(i,5) = value;
+%         if strcmp(PFCSet{row(j),2},'X')
+%             pointNode(i,4) = 0; % X
+%         else
+%             pointNode(i,4) = 1; % Y
+%         end
+%     end
+% end
+% [m,~] = size(lineNode);
+% numericCell = sideSet(:,1);
+% sideSet
+% numericVector = cell2mat(numericCell);
+% for i=1:m
+%     phytag = lineNode(i,1);
+%     % search in nodeSet
+%     [row,~] = find(numericVector==phytag);
+%     if row == 0
+%         continue
+%     end
+%     name = nodeSet{row,2};
+%     % find in DBCSet first
+%     [row,~] = find(strcmp(DBCSet,name),3);
+%     found = false;
+%     for j=1:length(row)
+%         value = DBCSet{row(j),2};
+%         lineNode(i,5) = value;
+%         lineNode(i,4) = value;
+%         found = true;
+%     end
+%     if found
+%         continue
+%     end
+%     % find in PFCSet next
+%     [row,~] = find(strcmp(PFCSet,name),3);
+%     for j=1:length(row)
+%         value = PFCSet{row(j),2};
+%         pointNode(i,3) = 1; % is a force
+%         pointNode(i,4) = value;
+%     end
+% end
 
 WriteVTKFile(outfile,0)
 
