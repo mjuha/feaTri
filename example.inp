@@ -1,7 +1,7 @@
 PROBLEM NAME: Elasticity 2D
 
 DISCRETIZATION
-Mesh Input File: \Users\marioju\Downloads\plateWithHole.msh
+Mesh Input File: \\Client\C$\Users\marioju\Downloads\plateWithHole.msh
 Output Filename: \\Client\C$\Users\marioju\Downloads\
 Side Set Association: 1
 1 top

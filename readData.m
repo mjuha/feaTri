@@ -70,7 +70,6 @@ for i=1:ndbc
         error('Verify node set association, name not found')
     end
 end
-
 % read Neumann BCs
 tline = fgetl(fileID);
 tmp = strsplit(tline);
@@ -329,6 +328,8 @@ clearvars elementsT
 %         pointNode(i,4) = value;
 %     end
 % end
+
+parseData(DBCSet, NBCSet, PFCSet, nodeSet, sideSet)
 
 WriteVTKFile(outfile,0)
 
