@@ -27,7 +27,7 @@ for i=1:nss
     tline = fgetl(fileID);
     tmp = strsplit(tline);
     phyN = str2double(tmp(1)); % physical entity number
-    sideSet(i,:) = {phyN, tmp(2)};
+    sideSet(i,:) = {phyN, tmp{2}};
 end
 % get node set association
 tline = fgetl(fileID);
@@ -38,7 +38,7 @@ for i=1:nns
     tline = fgetl(fileID);
     tmp = strsplit(tline);
     phyN = str2double(tmp(1)); % physical entity number
-    nodeSet(i,:) = {phyN, tmp(2)};
+    nodeSet(i,:) = {phyN, tmp{2}};
 end
 % read Dirichlet BCs
 tline = fgetl(fileID);
@@ -48,7 +48,7 @@ DBCSet = cell(ndbc,3);
 for i=1:ndbc
     tline = fgetl(fileID);
     tmp = strsplit(tline);
-    name = tmp(4);
+    name = tmp{4};
     dof = sscanf(tmp{7},'%[XY]');
     value = str2double(tmp(8)); % value to assign
     if strcmp(dof,'X')
@@ -78,7 +78,7 @@ NBCSet = cell(nnbc,2);
 for i=1:nnbc
     tline = fgetl(fileID);
     tmp = strsplit(tline);
-    name = tmp(4);
+    name = tmp{4};
     dof = sscanf(tmp{6},'%[press]');
     if ~strcmp(dof,'press')
         error('NBC must be force or press, please check')
@@ -106,7 +106,7 @@ PFCSet = cell(npfc,3);
 for i=1:npfc
     tline = fgetl(fileID);
     tmp = strsplit(tline);
-    name = tmp(4);
+    name = tmp{4};
     dof = sscanf(tmp{6},'%[force]');
     if ~strcmp(dof,'force')
         error('FPC must be force, please check')
