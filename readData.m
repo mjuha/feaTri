@@ -1,7 +1,7 @@
-function readData(filename)
+function outfile = readData(filename)
 
 % global variables
-global coordinates elements nn nel pointNode lineNode
+global coordinates elements nn nel pointNode lineNode MAT STATE neq
 
 % Open file
 fileID = fopen(filename,'r');
@@ -23,11 +23,15 @@ tline = fgetl(fileID);
 tmp = strsplit(tline);
 nss = str2double(tmp(4)); % number of side sets to read
 sideSet = cell(nss,2);
-for i=1:nss
-    tline = fgetl(fileID);
-    tmp = strsplit(tline);
-    phyN = str2double(tmp(1)); % physical entity number
-    sideSet(i,:) = {phyN, tmp{2}};
+if nss == 0
+    fgetl(fileID); % dummy line
+else
+    for i=1:nss
+        tline = fgetl(fileID);
+        tmp = strsplit(tline);
+        phyN = str2double(tmp(1)); % physical entity number
+        sideSet(i,:) = {phyN, tmp{2}};
+    end
 end
 % get node set association
 tline = fgetl(fileID);
@@ -75,29 +79,32 @@ tline = fgetl(fileID);
 tmp = strsplit(tline);
 nnbc = str2double(tmp(3)); % number of NBC to read
 NBCSet = cell(nnbc,2);
-for i=1:nnbc
-    tline = fgetl(fileID);
-    tmp = strsplit(tline);
-    name = tmp{4};
-    dof = sscanf(tmp{6},'%[press]');
-    if ~strcmp(dof,'press')
-        error('NBC must be force or press, please check')
-    end
-    value = str2double(tmp(7)); % value to assign
-    NBCSet(i,:) = {name, value};
-    % check that association is correct (input file only)
-    found = false;
-    for j=1:nss
-        if strcmp(name,sideSet{j,2})
-            found = true;
-            break;
+if nnbc == 0
+    fgetl(fileID); %dummy line
+else
+    for i=1:nnbc
+        tline = fgetl(fileID);
+        tmp = strsplit(tline);
+        name = tmp{4};
+        dof = sscanf(tmp{6},'%[press]');
+        if ~strcmp(dof,'press')
+            error('NBC must be force or press, please check')
+        end
+        value = str2double(tmp(7)); % value to assign
+        NBCSet(i,:) = {name, value};
+        % check that association is correct (input file only)
+        found = false;
+        for j=1:nss
+            if strcmp(name,sideSet{j,2})
+                found = true;
+                break;
+            end
+        end
+        if ~found
+            error('Verify side set association, name not found')
         end
     end
-    if ~found
-        error('Verify side set association, name not found')
-    end
 end
-
 % read point force BCs
 tline = fgetl(fileID);
 tmp = strsplit(tline);
@@ -134,10 +141,17 @@ end
 
 %Read material properties
 % get next two lines and discard them
-for i=1:2
-    fgetl(fileID);
+if npfc == 0
+    for i=1:3
+        fgetl(fileID);
+    end
+else
+    for i=1:2
+        fgetl(fileID);
+    end
 end
-MAT = zeros(2,1);
+
+MAT = zeros(1,3);
 tline = fgetl(fileID);
 tmp = strsplit(tline);
 MAT(1) = str2double(tmp(3)); % Elastic modulus
@@ -147,10 +161,17 @@ MAT(2) = str2double(tmp(3)); % Poisson ratio
 % get state
 tline = fgetl(fileID);
 tmp = strsplit(tline);
-if tmp{3}
-    STATE = 'planeStress';
-else
-    STATE = 'PlaneStrain';
+switch tmp{3}
+    case 'true'
+        STATE = 'planeStress';
+        tline = fgetl(fileID);
+        tmp = strsplit(tline);
+        MAT(3) = str2double(tmp(2));
+    case 'false'
+        STATE = 'planeStrain';
+        MAT(3) = 1.0;
+    otherwise
+        error('STATE unknown, must be plane stress or plain strain\n')
 end
 
 fclose(fileID);
@@ -255,80 +276,12 @@ end
 %
 clearvars elementsT
 
-% post-process boundary conditions
-% [m,~] = size(pointNode);
-% numericCell = nodeSet(:,1);
-% numericVector = cell2mat(numericCell);
-% for i=1:m
-%     phytag = pointNode(i,1);
-%     % search in nodeSet
-%     [row,~] = find(numericVector==phytag);
-%     if row == 0
-%         continue
-%     end
-%     name = nodeSet{row,2};
-%     % find in DBCSet first
-%     [row,~] = find(strcmp(DBCSet,name),3);
-%     found = false;
-%     for j=1:length(row)
-%         value = DBCSet{row(j),3};
-%         if strcmp(DBCSet{row(j),2},'X')
-%             pointNode(i,4) = 0; % X
-%         else
-%             pointNode(i,4) = 1; % Y
-%         end
-%         pointNode(i,5) = value;
-%         found = true;
-%     end
-%     if found
-%         continue
-%     end
-%     % find in PFCSet next
-%     [row,~] = find(strcmp(PFCSet,name),3);
-%     for j=1:length(row)
-%         value = PFCSet{row(j),2};
-%         pointNode(i,3) = 1; % is a force
-%         pointNode(i,5) = value;
-%         if strcmp(PFCSet{row(j),2},'X')
-%             pointNode(i,4) = 0; % X
-%         else
-%             pointNode(i,4) = 1; % Y
-%         end
-%     end
-% end
-% [m,~] = size(lineNode);
-% numericCell = sideSet(:,1);
-% sideSet
-% numericVector = cell2mat(numericCell);
-% for i=1:m
-%     phytag = lineNode(i,1);
-%     % search in nodeSet
-%     [row,~] = find(numericVector==phytag);
-%     if row == 0
-%         continue
-%     end
-%     name = nodeSet{row,2};
-%     % find in DBCSet first
-%     [row,~] = find(strcmp(DBCSet,name),3);
-%     found = false;
-%     for j=1:length(row)
-%         value = DBCSet{row(j),2};
-%         lineNode(i,5) = value;
-%         lineNode(i,4) = value;
-%         found = true;
-%     end
-%     if found
-%         continue
-%     end
-%     % find in PFCSet next
-%     [row,~] = find(strcmp(PFCSet,name),3);
-%     for j=1:length(row)
-%         value = PFCSet{row(j),2};
-%         pointNode(i,3) = 1; % is a force
-%         pointNode(i,4) = value;
-%     end
-% end
-
+fprintf('************************\n')
+fprintf('Preparing data structures and printing initial mesh\n')
+fprintf('************************\n')
+fprintf('%s %d\n','Number of nodes     ......... ',nn)
+fprintf('%s %d\n','Number of elements  ......... ',nel)
+fprintf('%s %d\n\n','Number of equations ......... ',neq)
 parseData(DBCSet, NBCSet, PFCSet, nodeSet, sideSet)
 
 WriteVTKFile(outfile,0)

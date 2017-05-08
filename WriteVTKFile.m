@@ -3,8 +3,8 @@ function WriteVTKFile( outfiledest,istep  )
 % This file is part of feaTri.
 
 %    feaTri is free software: you can redistribute it and/or modify
-%    it under the terms of the GNU Lesser General Public License as 
-%    published by the Free Software Foundation, either version 3 of the 
+%    it under the terms of the GNU Lesser General Public License as
+%    published by the Free Software Foundation, either version 3 of the
 %    License, or (at your option) any later version.
 
 %    feaTri is distributed in the hope that it will be useful,
@@ -12,19 +12,19 @@ function WriteVTKFile( outfiledest,istep  )
 %    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 %    GNU Lesser General Public License for more details.
 
-%    You should have received a copy of the GNU Lesser General Public 
-%    License along with feaTri.  
+%    You should have received a copy of the GNU Lesser General Public
+%    License along with feaTri.
 %    If not, see <http://www.gnu.org/licenses/>.
 %
 % Brief explanation:
 %
 %
 % Author: Mario J. Juha, Ph.D
-% Date: 
-% 
+% Date:
+%
 % =====================================================================
 
-global coordinates elements nn nel
+global coordinates elements nn nel U stress strain STATE MAT
 
 if istep < 10
     % file name
@@ -49,7 +49,7 @@ fprintf(fid,'ASCII\n');
 fprintf(fid, 'DATASET UNSTRUCTURED_GRID\n');
 fprintf(fid, '%s %d %s\n','POINTS ', nn, 'float');
 for i=1:nn
-    fprintf(fid, '%f  %f  %f\n', coordinates(i,1), coordinates(i,2), 0.0);
+    fprintf(fid, '%g  %g  %g\n', coordinates(i,1), coordinates(i,2), 0.0);
 end
 fprintf(fid, '%s %d %d\n','CELLS ', nel, 4*nel);
 for i=1:nel
@@ -59,16 +59,54 @@ fprintf(fid, '%s %d\n','CELL_TYPES ', nel);
 for i=1:nel
     fprintf(fid, '%d\n', 5);
 end
-% fprintf(fid, '%s %d\n', 'POINT_DATA ', nn);
-% fprintf(fid, 'VECTORS U float\n');
-% for i=1:nn
-%     fprintf(fid, '%f %f %f\n',ugold(1,i),ugold(2,i),0.0);
-% end 
-% fprintf(fid, 'SCALARS Pressure float 1\n');
-% fprintf(fid, 'LOOKUP_TABLE default\n');
-% for i=1:nn
-%     fprintf(fid, '%f\n',pgold(i));
-% end 
+fprintf(fid, '%s %d\n', 'POINT_DATA ', nn);
+fprintf(fid, 'VECTORS U float\n');
+for i=1:nn
+    fprintf(fid, '%g %g %g\n',U(1,i),U(2,i),0.0);
+end
+fprintf(fid, '%s %d\n', 'CELL_DATA ', nel);
+fprintf(fid, 'TENSORS Stress float\n');
+%fprintf(fid, 'LOOKUP_TABLE default\n');
+switch STATE
+    case 'planeStress'
+        for i=1:nel
+            fprintf(fid, '%g %g %g\n',stress(1,i), stress(3,i), 0.0 );
+            fprintf(fid, '%g %g %g\n',stress(3,i), stress(2,i), 0.0 );
+            fprintf(fid, '%g %g %g\n',0.0, 0.0, 0.0 );
+        end
+    case 'planeStrain'
+        poisson = MAT(1,2);
+        for i=1:nel
+            fprintf(fid, '%g %g %g\n',stress(1,i), stress(3,i), 0.0 );
+            fprintf(fid, '%g %g %g\n',stress(3,i), stress(2,i), 0.0 );
+            fprintf(fid, '%g %g %g\n',0.0, 0.0, (1+poisson)*(stress(1,i) ...
+                + stress(2,i)));
+        end
+    otherwise
+        error('Unknown state!\n')
+end
+
+fprintf(fid, 'TENSORS Strain float\n');
+%fprintf(fid, 'LOOKUP_TABLE default\n');
+switch STATE
+    case 'planeStress'
+        poisson = MAT(1,2);
+        young = MAT(1,1);
+        for i=1:nel
+            fprintf(fid, '%g %g %g\n',strain(1,i), strain(3,i), 0.0 );
+            fprintf(fid, '%g %g %g\n',strain(3,i), strain(2,i), 0.0 );
+            fprintf(fid, '%g %g %g\n',0.0, 0.0, -(poisson/young)*...
+                (stress(1,i)+stress(2,i)));
+        end
+    case 'planeStrain'
+        for i=1:nel
+            fprintf(fid, '%g %g %g\n',strain(1,i), strain(3,i), 0.0 );
+            fprintf(fid, '%g %g %g\n',strain(3,i), strain(2,i), 0.0 );
+            fprintf(fid, '%g %g %g\n',0.0, 0.0, 0.0);
+        end
+    otherwise
+        error('Unknown state!\n')
+end
 
 % close file
 fclose(fid);
